@@ -1,0 +1,2 @@
+# InputValid-python-secure
+This repo features a secure Python (Flask) sign-up app. For Master's research, its sign-up endpoint employs robust input validation for username, email, phone, and password, including length, format, and character set rules. This build demonstrates secure coding practices, mitigating input-based vulnerabilities, and is used to assess SAST tool performance in confirming these protections.
