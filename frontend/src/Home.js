@@ -60,7 +60,7 @@ function Home() {
 
       <img src={logo} className="Home-logo" alt="logo" />
       <p className="Home-title">
-        Unsecure Sign-Up Demonstration
+        Secure Sign-Up Demonstration
       </p>
 
       <h2>Sign Up (Unsecure)</h2>
