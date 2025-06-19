@@ -1,59 +1,49 @@
-nputValid-dotnet-secure - .NET 8 Secure Build
+InputValid-dotnet-secure - Python Flask Secure Build
 Purpose
-This repository contains the Secure Build of the C# .NET 8 application, developed as part of a comparative study on secure coding practices across different development stacks. This particular build demonstrates the implementation of robust secure coding techniques designed to mitigate common web application vulnerabilities.
-
-
+This repository contains the Secure Build of the Python Flask application, developed as part of a comparative study on secure coding practices across different development stacks. This build demonstrates the implementation of recommended secure coding techniques to mitigate common web application vulnerabilities.
 
 Vulnerability Focus
 This application specifically addresses the mitigation of three critical and pervasive web application vulnerabilities:
 
 Improper Input Validation: Ensuring all user input is thoroughly checked and sanitized on the server-side to prevent malicious data from entering the system.
-
-
-Insecure Secrets Management: Securely handling sensitive information such as API keys and credentials, avoiding hardcoded values.
-
-Insecure Error Handling: Preventing the exposure of sensitive internal information (e.g., file paths, database details) through verbose error messages.
-
+Insecure Secrets Management: Securely handling sensitive information like API keys and credentials, avoiding hardcoded values.
+Insecure Error Handling: Preventing the exposure of sensitive internal information through verbose error messages.
 Key Secure Coding Practices Implemented
-Input Validation: All user inputs submitted to the /signup endpoint are subjected to comprehensive server-side validation using explicit manual checks. These checks include:
-string.IsNullOrWhiteSpace for required fields.
-Length constraints for fields like Username, Email, and Password.
-Regular expressions (Regex.IsMatch) for username character sets, phone number formats, and password complexity.
-Email format validation using MailAddress.TryCreate.
-Password confirmation matching. This approach ensures data integrity and guards against common injection and format-based attacks.
-Secrets Management: (Placeholder - describe how you implement secure secrets management, e.g., using .NET User Secrets or Environment Variables, which are standard .NET practices.)
-Error Handling: (Placeholder - describe how you implement secure error handling, e.g., generic error pages, custom exception handling middleware, logging details internally without exposing them to users.)
+Input Validation: All user inputs submitted to the /signup endpoint are subjected to comprehensive explicit server-side validation. Dedicated helper functions (validate_username, validate_email, validate_phone_number, validate_password) ensure:
+Required Fields: Inputs must not be empty.
+Length Constraints: Fields adhere to specified minimum and maximum lengths (e.g., username 3-20 chars, password min 8 chars, email max 255 chars).
+Character Set/Format: Regular expressions (re.match, re.search) enforce valid character sets (e.g., alphanumeric for username, email format, phone number format, password complexity rules for uppercase, lowercase, numbers, and special characters).
+Whitespace Stripping: Inputs are stripped of leading/trailing whitespace (.strip()).
+Password Confirmation: The confirmPassword field is explicitly checked to match the password field. This approach ensures data integrity, guards against injection attacks (e.g., SQL Injection, XSS), and prevents malformed data from affecting application logic.
+Secrets Management: (Placeholder - In a production Flask application, sensitive information like API keys or database credentials would be loaded from environment variables (os.environ), a .env file (using python-dotenv), or a dedicated secrets management service, rather than being hardcoded in server.py.)
+Error Handling: (Placeholder - In a production Flask application, generic error handlers (@app.errorhandler) would catch exceptions and return non-descriptive, user-friendly error messages (e.g., "An internal server error occurred"), logging full details only internally for debugging. debug=True in app.run is used only for development and would be disabled in production.)
 Setup and Running the Application
 Prerequisites
-.NET 8 SDK: Specifically version 8.0.411 (as enforced by the global.json file in this project's root).
-Node.js and npm/yarn (if testing with the React frontend, which runs on http://localhost:3000).
+Python 3.x
+pip (Python package installer)
+Flask and Flask-CORS Python packages.
 Steps
 Clone the repository:
 Bash
 
 git clone <your-repo-url>
-cd InputValid-dotnet-secure/backend
-Verify .NET SDK version (optional, but good practice):
-Bash
+cd InputValid-dotnet-secure/python # Assuming your Python project is here
+Create and activate a virtual environment (recommended):
+    python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+3. **Install dependencies:**bash
+pip install Flask Flask-Cors # Add any other specific packages like python-dotenv if used for secrets
+4. **Run the application:**bash
+python server.py
+```
+The application will typically start on http://127.0.0.1:5003.
 
-dotnet --info
-Ensure it shows Version: 8.0.411 under ".NET SDKs installed" and "SDK: Version: 8.0.411" for the host. If not, ensure global.json is correctly placed in this backend directory.
-Restore dependencies:
-Bash
-
-dotnet restore
-Build the application:
-Bash
-
-dotnet build
-Run the application:
-Bash
-
-dotnet run
-The application will typically start on http://localhost:5000.
 API Endpoints
 POST /signup
-Purpose: Handles user registration requests with robust server-side validation.
+Purpose: Handles user registration requests with robust server-side input validation.
 Method: POST
 Content-Type: application/json
 Request Body Example (JSON):
@@ -67,25 +57,7 @@ JSON
   "confirmPassword": "SecureP@ssw0rd!"
 }
 Expected Behavior:
-Valid Inputs: Returns 200 OK with a success message. Check the backend console for --- /signup VALIDATION SUCCESS (via Explicit Manual Checks) ---.
-Invalid Inputs (e.g., empty fields, too long username, invalid email format, non-matching passwords): Returns 400 Bad Request with a JSON payload detailing the specific validation errors. Check the backend console for --- Explicit Manual Validation FAILED --- and specific error messages, followed by --- FINAL VALIDATION DECISION: FAILED (Returning 400 Bad Request) ---.
+Valid Inputs: Returns 200 OK with a success message. Check the backend console for --- VALIDATION SUCCESS ---.
+Invalid Inputs (e.g., empty fields, too long username, invalid email format, non-matching passwords): Returns 400 Bad Request with a JSON payload detailing the specific validation errors. Check the backend console for --- VALIDATION FAILED --- and specific error messages.
 Static Analysis Tooling
-This project is designed to be analyzed by Static Analysis Security Testing (SAST) tools such as Semgrep  and .NET Roslyn Analyzers  to measure their detection capabilities for the implemented security controls and to verify compliance with secure coding standards.
-
-
-
-Important Note: Regarding Input Validation Implementation in .NET 8
-During the development and rigorous testing of this .NET 8 application, an extremely unusual and highly localized anomaly was encountered concerning the framework's built-in Data Annotations validation system.
-
-Despite following standard secure coding practices (including correctly applying validation attributes like [Required], [StringLength], [EmailAddress], [RegularExpression] to the SignUpRequest model) and properly configuring the ASP.NET Core pipeline with builder.Services.AddControllers() and using [FromBody] for automatic model validation, the System.ComponentModel.DataAnnotations.Validator.TryValidateObject method (and by extension, the entire automatic model validation pipeline) consistently failed to register any validation errors. This occurred even when explicitly provided with inputs that were demonstrably empty strings ("", with Length: 0) or clearly invalid according to the defined attributes. The method would always return True (indicating valid) and capture 0 validation results.
-
-Extensive troubleshooting confirmed:
-
-The underlying .NET 8 SDK's Validator.TryValidateObject itself functions correctly in isolation (e.g., in a simple console application test within the same project environment). This ruled out a corrupted SDK.
-The input data was correctly received by the backend as intended (e.g., Username: "" (Length: 0)).
-The code syntax, project configuration (.csproj, global.json enforcing .NET 8), and using directives were all verified as standard and correct.
-The issue persisted regardless of explicit IServiceProvider injection into ValidationContext.
-The problem was not related to VS Code extensions or standard environment variables.
-This behavior indicates a deeply subtle, environment-specific conflict within the ASP.NET Core web application's runtime. This anomaly prevented the framework's intended validation mechanism from recognizing and processing validation attributes.
-
-Therefore, for this "Secure Build," the input validation for the /signup endpoint has been implemented using explicit, manual checks. This approach, while more verbose, ensures robust and reliable server-side validation against all specified criteria (required, length, format, regex, password matching), guaranteeing the application's security posture and allowing the empirical study to proceed. This situation highlights the unexpected complexities that can arise even with "batteries-included" frameworks, potentially impacting developer effort and the choice of security controls in real-world scenarios.
+This project is designed to be analyzed by Static Analysis Security Testing (SAST) tools such as Semgrep and Python's Bandit to measure their detection capabilities for the implemented security controls and to verify compliance with secure coding standards.
